@@ -67,12 +67,13 @@ jobs:
           tflint --init
           tflint
       
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.0.3
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@master
         with:
-          format: sarif
-          working_directory: env/dev
-          additional_args: --out tfsec.sarif
+          scan-type: 'config'
+          hide-progress: false
+          format: 'sarif'
+          output: 'trivy.sarif'
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v4
