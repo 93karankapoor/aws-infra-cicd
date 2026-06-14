@@ -71,6 +71,7 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           format: sarif
+          working_directory: /env/dev
           additional_args: --out tfsec.sarif
 
       - name: Upload SARIF
