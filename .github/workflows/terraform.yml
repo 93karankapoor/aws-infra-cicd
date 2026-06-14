@@ -24,6 +24,12 @@ jobs:
   terraform-plan:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+
+    env:
+      TFLINT_VERSION: 0.59.1
+      TFSEC_VERSION: 1.33.0
+      CHECKOV_VERSION: 2.0.0
+
     environment:
       name: dev
     steps:
