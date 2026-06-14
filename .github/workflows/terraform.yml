@@ -66,3 +66,47 @@ jobs:
           cd env/dev
           tflint --init
           tflint
+      
+      - name: tfsec scan (security scanning)
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ./env/dev
+          format: sarif
+          soft_fail: true
+          additional_args: --force-all-dirs --out tfsec.sarif
+
+      - name: Upload tfsec results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: tfsec.sarif
+
+      - name: Run checkov (policy-as-code)
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: env/dev
+          soft_fail: true
+          download_external_modules: true
+
+      - name: Upload checkov results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+      - name: Run terraform validate
+        run: |
+          cd env/dev
+          terraform validate
+
+      - name: Create plan
+        id: plan
+        run: |
+          cd env/dev
+          terraform plan -lock=false -input=false -out=tfplan.txt
+        continue-on-error: true
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.sha }}
+          path: env/dev/tfplan.txt
