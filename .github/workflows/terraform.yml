@@ -1,0 +1,62 @@
+name: Terraform Deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  
+  push:
+    branches:
+      - main
+      - dev
+
+  release:
+    types:
+      - published
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform-plan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+        name: Setup Terraform
+
+      - name: Setup tflint
+        run: |
+          curl -sSL "https://github.com/terraform-linters/tflint/releases/download/v${TFLINT_VERSION}/tflint_linux_amd64.zip" -o tflint.zip
+          unzip tflint.zip && sudo mv tflint /usr/local/bin
+          tflint --version
+
+      - name: Terraform fmt check
+        run: |
+          cd env/dev
+          terraform fmt -write=false -diff -check
+
+      - name: Terraform init
+        run: |
+          cd env/dev
+          terraform init
+
+      - name: Run tflint
+        run: |
+          cd env/dev
+          tflint --init
+          tflint
